@@ -7,7 +7,7 @@ import re
 import smtplib
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QDateTime, QEvent, QObject, QDate, QModelIndex, QAbstractTableModel ,QAbstractItemModel ,
+from PyQt5.QtCore import QDateTime, QEvent, QObject, QDate, QModelIndex, QAbstractTableModel ,QAbstractItemModel
 from PyQt5.QtWidgets import QMainWindow, QAction, QDateTimeEdit , QDateEdit , QTableWidget ,QTableWidgetItem , QActionGroup ,QAbstractButton, QRadioButton,QButtonGroup , QCheckBox , QAbstractItemView , QLayout , QFormLayout , QMessageBox , QStyledItemDelegate
 from datetime import datetime , date , timedelta
 
@@ -478,71 +478,63 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
           self.error_msg = QtWidgets.QMessageBox(self, text="You can only have one appointment booked") # if length of appointment query is not 0 show message saying you can only have one appointment booked at a time
           self.error_msg.show()
 
-class admin_bk_appts(QMainWindow): # inherit class QMainWindow
+class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
     def __init__(self):
         super().__init__()  # call parent class constructor
 
         self.gapLength = 0 # initialize gap length and set to 0
 
-        self.resize(400,600) # set size of window
-        self.submit = QtWidgets.QPushButton(self) # add submit button
-        self.submit.setGeometry(QtCore.QRect(125, 500, 151, 31)) # set size and location of button
-        self.submit.setText("Submit details") # set button text
+        self.resize(300,200) # set size of window
+        #self.submit = QtWidgets.QPushButton(self) # add submit button
+        #self.submit.setGeometry(QtCore.QRect(125, 500, 151, 31)) # set size and location of button
+        #self.submit.setText("Submit details") # set button text
         self.lunch_start = None # initialize lunch_start variable and set it to non type
         self.lunch_end = None # initialize lunch_end variable and set it to non type
 
-        self.s_time = QtWidgets.QLabel(self) # add start time label to window
-        self.s_time.setGeometry(QtCore.QRect(45, 155, 125, 15)) # set size and location of start time label
-        self.s_time.setText('Start time') # add text to start time label
+        #self.s_time = QtWidgets.QLabel(self) # add start time label to window
+        #self.s_time.setGeometry(QtCore.QRect(45, 155, 125, 15)) # set size and location of start time label
+        #self.s_time.setText('Start time') # add text to start time label
 
 
         self.start_time = QDateTimeEdit(self, calendarPopup = True) # add qdatetime edit ti window and seet the calender pop to true , this will allow users to select a date from a calender pop up widget
-        self.start_time.setGeometry(QtCore.QRect(175, 145, 150, 30)) # set size and location of start time widget
+        #self.start_time.setGeometry(QtCore.QRect(175, 145, 150, 30)) # set size and location of start time widget
         self.start_time.dateTimeChanged.connect(self.check_time) # if the user changes the date/time then check_time method is triggered
-        self.submit.clicked.connect(self.submit_details) # if submit button is clicked this will trigger the submit_details method
+        #self.submit.clicked.connect(self.submit_details) # if submit button is clicked this will trigger the submit_details method
         print(" datetime is", self.start_time.dateTime()) # print the default date time for testing purposes
 
         #self.eTime = QtWidgets.QLabel(self)
         #self.eTime.setGeometry(QtCore.QRect(45, 190, 125, 30))
         #self.eTime.setText('End Time')
 
-        #self.end_time = QDateTimeEdit(self, calendarPopup=True, date=QDate.currentDate())
+        #self.end_time = QDateTimeEdit(self, calendarPopupad=True, date=QDate.currentDate())
         #self.end_time.setGeometry(QtCore.QRect(175, 190, 150, 30))
         #self.et = self.end_time.dateTime()
        # self.et_string = self.et.toString(self.end_time.displayFormat())
         #self.et = self.end_time.dateTimeChanged.connect(lambda: checkTime())
 
         self.add_appt_form= QFormLayout(self)
-        self.add_appt_form.setGeometry(QtCore.QRect(10, 10, 75, 100))
+        self.add_appt_form.setGeometry(QtCore.QRect(75, 50, 250, 250))
+
+        self.location = QtWidgets.QLineEdit(self)
+        self.choose_doctor = QtWidgets.QComboBox(self)
+        self.choose_doctor.currentIndexChanged.connect(self.get_index)
+        self.appt_length = QtWidgets.QComboBox(self)
+        self.apptLengthOptions = ["15",
+                                  "30"]  # add options for appointment lengths to a list - these will later be converted to int
+        self.appt_length.addItems(self.apptLengthOptions)  # add list to combo box
 
 
-        self.add_appt_form.insertRow(1, QtWidgets.QLabel("Name", self.add_doc), self.doc_name)
-        self.add_doc_form.addRow(QtWidgets.QLabel("Date of birth", self.add_doc), self.doc_dob_cal)
-        self.add_doc_form  .addRow(QtWidgets.QLabel("Specialization", self.add_doc), self.doc_specialization)
-        self.doc_sbmt = QtWidgets.QPushButton("Submit", self.add_doc)
-        self.doc_sbmt.setGeometry(QtCore.QRect(95, 140, 100, 35))
+        self.add_appt_form.insertRow(1, QtWidgets.QLabel("Location", self), self.location)
+        self.add_appt_form.addRow(QtWidgets.QLabel("Start time", self), self.start_time)
+        self.add_appt_form.addRow(QtWidgets.QLabel("Choose doctor", self), self.choose_doctor)
+        self.add_appt_form.addRow(QtWidgets.QLabel("Appointment length", self), self.appt_length)
+        self.add_appt_sbmt = QtWidgets.QPushButton("Submit", self)
+        self.add_appt_sbmt.setGeometry(QtCore.QRect(95, 500, 75, 55))
         # self.sbmt.clicked.connect(self.sbmtfunc)
-        self.add_doc.show()
 
-        self.location = QtWidgets.QTextEdit(self) # add location text field
-        self.location.setGeometry(QtCore.QRect(175, 230, 125, 30)) # set size and location of text field
 
-        self.location_label = QtWidgets.QLabel(self) # add location label to window
-        self.location_label.setGeometry(QtCore.QRect(45, 230, 125, 30)) # set size and location of location label
-        self.location_label.setText('Location') # set location label text
 
-        self.choose_doctor = QtWidgets.QComboBox(self) # add combo box (drop down list ) for choosing doctors
-        self.choose_doctor.setGeometry(QtCore.QRect(175, 270, 135, 40)) # set size and location of combo box
-        self.choose_doctor.currentIndexChanged.connect(self.get_index) # when doctor is chosen get the trigger get_index method which will return index of chosen doctor
 
-        self.appt_label = QtWidgets.QLabel(self)
-        self.appt_label.setGeometry(QtCore.QRect(45, 315, 125, 30))
-        self.appt_label.setText('Appointment length')
-
-        self.appt_length = QtWidgets.QComboBox(self) # add another combo box so that appointment lengths can be set
-        self.appt_length.setGeometry(QtCore.QRect(175, 310, 135, 40)) # set size and location of combo box
-        self.apptLengthOptions = ["15","30"] # add options for appointment lengths to a list - these will later be converted to int
-        self.appt_length.addItems(self.apptLengthOptions) # add list to combo box
 
 
         self.get_doc = main.queryDoc() # call sql query method from main file and set it to variable
@@ -554,9 +546,7 @@ class admin_bk_appts(QMainWindow): # inherit class QMainWindow
             self.doc_list.append(doc_string) # add doc_string to list
         self.choose_doctor.addItems(self.doc_list) # add doc_string to list
 
-        self.choose_doctor_label = QtWidgets.QLabel(self) # add choose doctor label to window
-        self.choose_doctor_label.setGeometry(QtCore.QRect(45, 270, 125, 30)) # set size and location of choose doctor label
-        self.choose_doctor_label.setText('Choose doctor') # set text for choose doctor label
+
 
 
     def check_time(self): # this method is triggered when the subtmit button is clicked
@@ -753,14 +743,16 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
         self.add_doc_form = QFormLayout(self.add_doc)
         self.add_doc_form.setGeometry(QtCore.QRect(10, 10, 75, 100))
         self.doc_name = QtWidgets.QLineEdit()
+        self.doc_lname = QtWidgets.QLineEdit()
         self.doc_dob_cal = QtWidgets.QDateEdit(calendarPopup = True)
         self.doc_specialization = QtWidgets.QLineEdit()
 
-        self.add_doc_form.insertRow(1, QtWidgets.QLabel("Name", self.add_doc), self.doc_name)
+        self.add_doc_form.insertRow(1, QtWidgets.QLabel("First Name", self.add_doc), self.doc_name)
+        self.add_doc_form.addRow(QtWidgets.QLabel("Last Name", self.add_doc), self.doc_lname)
         self.add_doc_form.addRow(QtWidgets.QLabel("Date of birth", self.add_doc), self.doc_dob_cal)
         self.add_doc_form.addRow(QtWidgets.QLabel("Specialization", self.add_doc), self.doc_specialization)
         self.doc_sbmt = QtWidgets.QPushButton("Submit", self.add_doc)
-        self.doc_sbmt.setGeometry(QtCore.QRect(95, 140, 100, 35))
+        self.doc_sbmt.setGeometry(QtCore.QRect(95, 155, 100, 35))
         # self.sbmt.clicked.connect(self.sbmtfunc)
         self.add_doc.show()
 
