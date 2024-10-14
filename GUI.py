@@ -326,8 +326,8 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
 
     def send_appts(self, email_address, appointments):
 
-        email = 'sbridge11@googlemail.com'
-        password = 'hfpgbhljxumexiqd'
+        email = 'your email here
+        password = 'your password here'
         smpt_object = smtplib.SMTP('smtp.gmail.com', 587)
         smpt_object.ehlo()
         smpt_object.starttls()
