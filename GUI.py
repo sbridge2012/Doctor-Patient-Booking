@@ -775,24 +775,32 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
 
 
     def submit_doc(self):
-        self.doc_name_widg = self.add_doc_form.itemAt(0, 1)  # prints house no
+        self.doc_name_widg = self.add_doc_form.itemAt(0, 1)
         self.doc_name_widget = self.doc_name_widg.widget()
         self.doc_name_widget_data = self.doc_name_widget.text()
-        print(self.doc_name_widget_data, "doctor name")
+        print(self.doc_name_widget_data, "First name")
+
+        self.doc_surname_widg = self.add_doc_form.itemAt(1, 1)
+        self.doc_surname_widget = self.doc_surname_widg.widget()
+        self.doc_surname_widget_data = self.doc_surname_widget.text()
+        print(self.doc_name_widget_data, "Surname name")
 
 
-        self.doc_dob = self.add_doc_form.itemAt(1, 1)  # prints house no
+        self.doc_dob = self.add_doc_form.itemAt(2, 1)
         self.doc_dob_widget = self.doc_dob.widget()
         self.doc_dob_widget_data = self.doc_dob_widget.text()
         print(self.doc_dob_widget_data, "date from form!")
 
-        self.doc_spec = self.add_doc_form.itemAt(2, 1)  # prints house no
+        self.doc_spec = self.add_doc_form.itemAt(3, 1)
         self.doc_spec_widget = self.doc_spec.widget()
         self.doc_spec_widget_data = self.doc_spec_widget.text()
         print(self.doc_spec_widget_data, "doctor spec")
 
 
-        self.doc_name_match = re.search("^([a-zA-Z]{2,}\s[a-zA-Z]{1,}'?-?[a-zA-Z]{2,}\s?([a-zA-Z]{1,})?$)", self.doc_name_widget_data)
+        self.doc_name_match = re.search("^[A-Za-z]{1,20}$", self.doc_name_widget_data)
+
+        self.doc_surname_match = re.search("^[A-Za-z]{1,20}$",
+                                        self.doc_surname_widget_data )
 
         self.doc_spec_match = re.search("^[A-Za-z]{1,35}(?:\s+[A-Za-z]{0,35})*\s*$", self.doc_spec_widget_data)
 
@@ -804,7 +812,14 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
 
 
         else:
-            self.doc_error_list.append("Invalid doctor name")
+            self.doc_error_list.append("Invalid first name")
+
+        if self.doc_surname_match is not None:
+            pass
+
+
+        else:
+            self.doc_error_list.append("Invalid last name")
 
         if self.doc_spec_match is not None:
             pass
@@ -814,7 +829,7 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
             self.doc_error_list.append("Invalid specialization")
 
         if len(self.doc_error_list) == 0:
-            main.insert_doc_data(self.doc_name_widget_data, self.get_doc_dob_date(), self.doc_spec_widget_data)
+            main.insert_doc_data(self.doc_name_widget_data, self.get_doc_dob_date(), self.doc_spec_widget_data,self.doc_surname_widget_data)
             self.doc_msgbox.setText("Doctor details succesfully entered")
             self.doc_msgbox.show()
             self.add_doc.close()

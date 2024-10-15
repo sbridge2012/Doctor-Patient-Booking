@@ -48,12 +48,12 @@ class Patient: # create Patient class
 Benson = Patient("Benson Ripplesburg", 34, "Male", "Herpes", "White", "Benson1", "B123" , "benson@hotmail.com" , " 34 benson street ") # make instance of Patient class to test that it works
 
 
-def insert_doc_data(Name, DOB, Specialization): # this is a method i used to test inserting data into the Doctor table
+def insert_doc_data(Name, DOB, Specialization, SURNAME): # this is a method i used to test inserting data into the Doctor table
 
     try:
 
-        cur.execute("INSERT INTO Doctor (NAME,SPECIALIZATION, DOB) VALUES(?,?,?)",
-                    (Name, Specialization,DOB))
+        cur.execute("INSERT INTO Doctor (NAME,SPECIALIZATION, DOB, SURNAME) VALUES(?,?,?,?)",
+                    (Name, Specialization,DOB, SURNAME))
         con.commit()
 
     except sqlite3.Error as error:
@@ -402,6 +402,18 @@ def filter_appts2(): # querying all of the data in the appointments table
     except sqlite3.Error as error:
         print("error has occured")
 
+
+
+
+
+
+
+def add_col():
+    cur.execute("ALTER TABLE Doctor ADD COLUMN SURNAME TEXT  ;")
+    rows = cur.fetchall()
+    con.commit()
+    print(rows)
+    print("Patients")
 
 
 
