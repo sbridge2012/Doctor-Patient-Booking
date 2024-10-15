@@ -371,7 +371,7 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
         self.date_picker.setGeometry((QtCore.QRect(325, 50, 150, 75)))
         self.date_picker.setDate(QDate.currentDate())
 
-        self.table = QtWidgets.QTableView(self, 	)
+        self.table = QtWidgets.QTableView(self)
 
         self.table.setGeometry(QtCore.QRect(50, 150, 700, 505))
         self.submit_btn = QtWidgets.QPushButton(self)
@@ -529,13 +529,9 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         self.add_appt_form.addRow(QtWidgets.QLabel("Choose doctor", self), self.choose_doctor)
         self.add_appt_form.addRow(QtWidgets.QLabel("Appointment length", self), self.appt_length)
         self.add_appt_sbmt = QtWidgets.QPushButton("Submit", self)
-        self.add_appt_sbmt.setGeometry(QtCore.QRect(95, 500, 75, 55))
-        # self.sbmt.clicked.connect(self.sbmtfunc)
-
-
-
-
-
+        self.add_appt_sbmt.setGeometry(QtCore.QRect(110, 155, 75, 45))
+        self.add_appt_sbmt.show()
+        self.add_appt_sbmt.clicked.connect(self.submit_details)
 
         self.get_doc = main.queryDoc() # call sql query method from main file and set it to variable
         print(self.get_doc) # print the variable for testing purposes
@@ -579,19 +575,23 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         current_year = QtCore.QDate.year(QtCore.QDate.currentDate())
         min_time = QtCore.QTime(8, 32)
         max_time = QtCore.QTime(16,30)
+        errors = 0
 
         if self.time_value.date() < QtCore.QDate.currentDate():
             self.appt_error = QMessageBox(self)
             self.appt_error.setText("You cannot  book appointments in the past")
             self.appt_error.show()
+            errors += 1
 
-            if self.time_value.time() < min_time or  self.time_value.time() > max_time:
-                self.appt_error = QMessageBox(self)
-                self.appt_error.setText("You cannot  book appointments before 8am or after 4pm")
-                self.appt_error.show()
+        if self.time_value.time() < min_time or  self.time_value.time() > max_time:
+            self.appt_error = QMessageBox(self)
+            self.appt_error.setText("You cannot  book appointments before 8am or after 4pm")
+            self.appt_error.show()
+            errors += 1
 
-        else:
+        elif errors == 0:
             self.get_doc_appts = main.get_doctor_appts(self.doc_id, self.start_date_string[:10]) # call method with sql query
+            print("big burger",self.start_date_string, self.sEndTime, 'end')
 
             if len(self.get_doc_appts) == 0: # if length of query is 0 call method with sql query and enter detials
                 try:
@@ -783,7 +783,8 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
         self.doc_surname_widg = self.add_doc_form.itemAt(1, 1)
         self.doc_surname_widget = self.doc_surname_widg.widget()
         self.doc_surname_widget_data = self.doc_surname_widget.text()
-        print(self.doc_name_widget_data, "Surname name")
+
+
 
 
         self.doc_dob = self.add_doc_form.itemAt(2, 1)
