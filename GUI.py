@@ -1,14 +1,16 @@
 import sys
 import time
 
+
 import Email
 import sqlite3
 import re
 import smtplib
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets ,QtGui
 from PyQt5.QtCore import QDateTime, QEvent, QObject, QDate, QModelIndex, QAbstractTableModel ,QAbstractItemModel
-from PyQt5.QtWidgets import QMainWindow, QAction, QDateTimeEdit , QDateEdit , QTableWidget ,QTableWidgetItem , QActionGroup ,QAbstractButton, QRadioButton,QButtonGroup , QCheckBox , QAbstractItemView , QLayout , QFormLayout , QMessageBox , QStyledItemDelegate
+from PyQt5.QtWidgets import QMainWindow, QAction, QDateTimeEdit, QDateEdit, QTableWidget, QTableWidgetItem, QDockWidget,QActionGroup, QAbstractButton, QRadioButton, QButtonGroup, QCheckBox, QAbstractItemView, QLayout, QFormLayout, \
+    QMessageBox, QStyledItemDelegate, QTextEdit
 from datetime import datetime , date , timedelta
 
 
@@ -94,7 +96,7 @@ class firstScreen(QMainWindow): #  class that shows window when user has logged 
         self.rs.show()
 
 
-class adminLoginScreen(QtWidgets.QWidget): #  class that shows window when user has logged in
+class adminLoginScreen(QtWidgets.QWidget ): #  class that shows window when user has logged in
 
     def __init__(self):
         super().__init__() #  call parent class constructor
@@ -109,9 +111,12 @@ class adminLoginScreen(QtWidgets.QWidget): #  class that shows window when user 
 
 
 
+
+
         self.p_word = QtWidgets.QLineEdit(self)  # add password text edit to screen
         self.p_word.setGeometry(QtCore.QRect(70, 100, 150, 30))  # set size and location of button
         self.p_word.setEchoMode(2)
+
 
 
         self.Login = QtWidgets.QPushButton(self) #  add view appointments button
@@ -137,33 +142,49 @@ class adminLoginScreen(QtWidgets.QWidget): #  class that shows window when user 
 
 
 
+
+
 class loginScreen(QMainWindow): #  class that shows window when user has logged in
     logged_in_patientid = 0
     def __init__(self):
         super().__init__() #  call parent class constructor
 
-
         self.resize(300,200) # set size of window
         self.setWindowTitle( "Login ") #  set title
-
-
-
-
-
-        self.u_name= QtWidgets.QTextEdit(self) # add usern name text edit box
+        self.u_name= QTextEdit(self)
         self.u_name.setGeometry(QtCore.QRect(70,30, 150, 30)) # set size and location of usernme text edit field
         self.u_name.setText("Enter Username")
+        self.u_name.viewport().installEventFilter(self)
 
-        self.p_word = QtWidgets.QLineEdit(self)  # add password text edit to screen
+
+        self.p_word = QtWidgets.QLineEdit(self) #   add password text edit to screen
         self.p_word.setGeometry(QtCore.QRect(70, 100, 150, 30))  # set size and location of button
         self.p_word.setEchoMode(2)
         self.p_word.setText("Enter Password")
+        self.p_word.installEventFilter(self)
 
 
         self.Login = QtWidgets.QPushButton(self) #  add view appointments button
         self.Login.setGeometry(QtCore.QRect(70, 160, 150, 30)) # set size and location of view appointments button
         self.Login.setText("Login") #  set text for view appointments buttonlo
         self.Login.clicked.connect(self.logged_in_check)
+
+
+    def eventFilter(self, QObject, QEvent):
+
+        if QObject == self.u_name.viewport():
+            if QEvent.type() == QEvent.MouseButtonPress:
+                self.u_name.setText("")
+                return True
+        if QObject == self.p_word:
+            if QEvent.type() == QEvent.MouseButtonPress:
+                self.p_word.setText("")
+                return True
+        return False
+
+
+
+
 
     def logged_in_check(self):  # this class sets the qmain window for when the user clicks log in
         print("user name is ",self.u_name.toPlainText())  # print the logged in users user name for testing purposes
@@ -177,8 +198,7 @@ class loginScreen(QMainWindow): #  class that shows window when user has logged 
         else:
 
             for u, p, r in self.get_login:  # set up for loop to go retrieve users log in details - thinking about this it doesn't really need a loop as there should only be one row of data returned in a tuple inside a list
-                print(u, p, r, "loop variables")  # print loop variables for testing purposes
-                print(self.get_login, " self login")
+                print(self.p_word.text())
                 if self.p_word.text() == p:  # if text in password matches password from loop execute the below
                     Layout.logged_in_token = 1  # set the logged in token to 1
              # set logged in patient id to id from the loop
@@ -189,10 +209,10 @@ class loginScreen(QMainWindow): #  class that shows window when user has logged 
                             r)  # update the logged in flag in the patient table to 1 to show that user is logged in
                     self.l = LoggedIn()  # make instance of LoggedIn class
                     self.l.show()  # call the show method to display the logged in class
-                elif self.pword.text() != p:  # if password is wrong execute the following
+                elif self.p_word.text() != p:  # if password is wrong execute the following
 
                     fail = QtWidgets.QMessageBox(self,
-                                                     text="Login fail")  # pop up message box telling user their password is wrong
+                                                     text="Password wrong")  # pop up message box telling user their password is wrong
                     fail.show()  # show the message box
                 elif len(self.login) == 0:
                     fail.show()
@@ -207,14 +227,7 @@ class TableModel(QAbstractTableModel):
         super().__init__() # call parent class ( QAbstractTableModel) constructor
         self.data = data
 
-        #self.headers = [''] * 5 # create list to contain header values
-        #self.st = ''
 
-        #self.setHeaderData(0,QtCore.Qt.Horizontal,"Start Date and Time")
-        #self.setHeaderData(1, QtCore.Qt.Horizontal, "End Date and Time")
-        #self.setHeaderData(2, QtCore.Qt.Horizontal, "Location")
-        #self.setHeaderData(3, QtCore.Qt.Horizontal, "Doctor")
-        #self.setHeaderData(4, QtCore.Qt.Horizontal, "Patient")
 
     def rowCount(self, parent=QModelIndex, *args, **kwargs):
 
@@ -228,30 +241,27 @@ class TableModel(QAbstractTableModel):
 
         if role == QtCore.Qt.DisplayRole: # if role is string
             try:
-                print(QModelIndex.parent(), 'has parent')
+
                 return  self.data[QModelIndex.row()][QModelIndex.column()]  # return the data at each required index ( this has no relation to the underyling list that is in the model)
 
 
             except IndexError:
                 print("error has occured")
 
-    def removeRows(self, p_int, p_int_1, parent=QModelIndex, *args, **kwargs):
+    def removeRows(self, p_int, p_int_1, parent=QModelIndex, *args, **kwargs): # this method removes rows from model
 
-        self.beginRemoveRows(QModelIndex(),p_int,p_int_1)
-        del(self.data[p_int])
-        self.endRemoveRows()
+        self.beginRemoveRows(parent,p_int, p_int_1) # begin remove row operation at specified row (p_int)
+        del(self.data[p_int] )
+        # delete data at specified row (p_int)
+        self.endRemoveRows() # call method end row removal operation
 
         return True
 
-    def headerData(self, p_int, Qt_Orientation, role=QtCore.Qt.DisplayRole):
+    def headerData(self, p_int, Qt_Orientation, role=QtCore.Qt.DisplayRole): # set the header data for the model and in the view
 
         if Qt_Orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:  # if orientation is horizontal and DisplayRole is string
             try:
-                #return self.headers[p_int]
 
-                # return 'cheese'
-
-                print("error has occured")
                 if p_int == 0:
                     return "Start Date and Time"
                 if p_int == 1:
@@ -265,13 +275,6 @@ class TableModel(QAbstractTableModel):
             except:
                 IndexError
 
-    #def setHeaderData(self, p_int, Qt_Orientation, Value, role=QtCore.Qt.DisplayRole):
-
-        #if Qt_Orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole: # if header orientation is horizontal and the role is text
-            #try:
-                #self.headers[p_int] = Value # set each list index (HorizontalHeaders) to Value
-                #except IndexError:
-    #    print("error has occured")
 
 
 
@@ -285,9 +288,10 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
         #self.p_appts.setGeometry(QtCore.QRect(100, 50, 400, 500)) # set size of list widget
         self.qtable = QtWidgets.QTableView(self)
         self.qtable.setGeometry(QtCore.QRect(50, 50, 500, 250))
-
-
         self.qtable.show()
+
+
+
 
         self.apptString = "" # initialze appt string
         self.appts_list = [] # initialie appts list
@@ -295,7 +299,7 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
         print(loginScreen.logged_in_patientid , "patient ID")
         self.view_appts = main.get_patient_appts(loginScreen.logged_in_patientid) # call getPatientApps sql query from main file
         if len(self.view_appts) == 0:
-            self.no_appts = QMessageBox(self)
+            self.no_appts = QMessageBox()
             self.no_appts.setText("You do not have any booked appointments")
             self.no_appts.show()
         else:
@@ -307,6 +311,13 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
             self.submit.setGeometry(QtCore.QRect(220,325,200,65))
             self.get_email = main.get_patient_email(loginScreen.logged_in_patientid)
             self.submit.clicked.connect(self.send_email)
+
+            #dock_widg = QDockWidget(self)
+            #dock_widg.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
+            #dock_widg.setWidget(self.submit)
+
+            #self.addDockWidget(QtCore.Qt.BottomDockWidgetArea,dock_widg)
+            #self.setCentralWidget(self.qtable)
 
 
     def send_email(self):
@@ -365,11 +376,16 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
 
         self.resize(825,800) # set window size
         self.get_appts = main.queryAppts()
+
+
+
+
         self.list=[] # initialize list
         self.appts_string=""  # initialize string
-        self.date_picker = QtWidgets.QDateTimeEdit(self,calendarPopup= True)
+        self.date_picker = QtWidgets.QDateEdit(self,calendarPopup= True)
         self.date_picker.setGeometry((QtCore.QRect(325, 50, 150, 75)))
         self.date_picker.setDate(QDate.currentDate())
+
 
         self.table = QtWidgets.QTableView(self)
 
@@ -377,8 +393,13 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
         self.submit_btn = QtWidgets.QPushButton(self)
         self.submit_btn.setGeometry(QtCore.QRect(350,675,75,45))
         self.submit_btn.setText("Submit")
+        self.close_window = QtWidgets.QPushButton(self)
+        self.close_window.setGeometry(QtCore.QRect(550, 675, 75, 45))
+        self.close_window.setText("Close")
+        self.submit_btn.setText("Submit")
         self.table.setSelectionBehavior(1)
         self.table.setSelectionMode(1)
+
 
         self.appt_list = []
         self.appt_list_string = ''
@@ -386,35 +407,25 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
             self.appt_list_string += start + '' + end + '' + location + '' + doc
             print('the doc id is ', id)  # for debugging
 
-
-
-
-
             self.appt_list.append((start,end,location,doc))
-        print(self.appt_list, 'appt list')
+            print(self.appt_list, 'appt list')
 
+            self.tab_row = 0
 
+            self.data_model = TableModel(self.appt_list)
+            self.table.setModel(self.data_model)
+            col = 0
+            for col in range(len(self.get_appts[0])):
+                self.table.setColumnWidth(col,175)
+                col += 1
 
+            self.table.setRowHeight(0,40)
 
-        self.tab_row = 0
-        #print(self.get_appts)
-        self.data_model = TableModel(self.appt_list)
-        self.table.setModel(self.data_model)
-        col = 0
-        for col in range(len(self.get_appts[0])):
-            self.table.setColumnWidth(col,175)
-            col += 1
-
-        self.table.setRowHeight(0,40)
-
-        self.table.show()
-
-
-
-
-        self.date_picker.dateChanged.connect(self.appt_date_filter)
+            self.table.show()
+            self.date_picker.dateChanged.connect(self.appt_date_filter)
             #self.table.cellClicked.connect(self.change)
-        self.submit_btn.clicked.connect(self.submit_data)
+            self.submit_btn.clicked.connect(self.submit_data)
+            self.close_window.clicked.connect(self.close_win)
 
 
 
@@ -426,16 +437,24 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
 
         self.get_filt_apps = main.filter_appts(self.filter_date_string)
 
+        if len(self.get_filt_apps) == 0:
+             filt_error =QMessageBox(self)
+             filt_error.setText("No appointments on this day")
+             filt_error.show()
+             self.date_picker.setDate(QDate.currentDate())
 
-        self.submit_btn.clicked.connect(self.submitted)
+        else:
 
 
-        self.data_model = TableModel(self.get_filt_apps)
-        self.table.setModel(self.data_model)
-        self.table.setColumnWidth(0, 150)
-        self.table.setRowHeight(0, 40)
+            self.data_model = TableModel(self.get_filt_apps)
+            self.table.setModel(self.data_model)
+            self.table.setColumnWidth(0, 150)
+            self.table.setRowHeight(0, 40)
 
-        self.table.show()
+            self.table.show()
+
+
+
 
 
 
@@ -478,6 +497,10 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
           self.error_msg = QtWidgets.QMessageBox(self, text="You can only have one appointment booked") # if length of appointment query is not 0 show message saying you can only have one appointment booked at a time
           self.error_msg.show()
 
+    def close_win(self):
+        self.close()
+        print('closed?')
+
 class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
     def __init__(self):
         super().__init__()  # call parent class constructor
@@ -501,6 +524,7 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         self.start_time.dateTimeChanged.connect(self.check_time) # if the user changes the date/time then check_time method is triggered
         #self.submit.clicked.connect(self.submit_details) # if submit button is clicked this will trigger the submit_details method
         print(" datetime is", self.start_time.dateTime()) # print the default date time for testing purposes
+        self.start_time.setDateTime(QDateTime.currentDateTime())
 
         #self.eTime = QtWidgets.QLabel(self)
         #self.eTime.setGeometry(QtCore.QRect(45, 190, 125, 30))
@@ -532,6 +556,7 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         self.add_appt_sbmt.setGeometry(QtCore.QRect(110, 155, 75, 45))
         self.add_appt_sbmt.show()
         self.add_appt_sbmt.clicked.connect(self.submit_details)
+
 
         self.get_doc = main.queryDoc() # call sql query method from main file and set it to variable
         print(self.get_doc) # print the variable for testing purposes
@@ -573,31 +598,67 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
 
     def submit_details(self):  # this method is triggered when the submit button is pressed
         current_year = QtCore.QDate.year(QtCore.QDate.currentDate())
-        min_time = QtCore.QTime(8, 32)
+        min_time = QtCore.QTime(8, 29)
         max_time = QtCore.QTime(16,30)
-        errors = 0
+        self.errors = 0
 
-        if self.time_value.date() < QtCore.QDate.currentDate():
+        self.location_widg= self.add_appt_form.itemAt(0, 1)
+        self.location_name_widget = self.location_widg.widget()
+        self.location_name_widget_data = self.location_name_widget.text()
+        print(self.location_name_widget_data , 'location fro wiidget')
+
+        # self.start_time_widg = self.add_appt_form.itemAt(1, 1) # redundant code
+        # self.start_time_widget = self.start_time_widg.widget() # redundant code
+        #self.start_time_widget_data = self.start_time_widget.dateTime() # redundant code
+        #print(self.start_time_widget_data , 'start time from widget') # redundant code
+
+        self.appt_length_widg = self.add_appt_form.itemAt(3, 1)
+        self.appt_length_widget = self.appt_length_widg.widget()
+        self.appt_length_data = self.appt_length_widget.currentText()
+        print(self.appt_length_data, ' appt length from widget')
+
+
+
+
+        if not self.location_name_widget_data:
             self.appt_error = QMessageBox(self)
-            self.appt_error.setText("You cannot  book appointments in the past")
+            self.appt_error.setText("You must provide a location name")
             self.appt_error.show()
-            errors += 1
+            self.errors += 1
+
+
+
+        if self.time_value.currentDateTime() < QtCore.QDateTime.currentDateTime():
+            print(self.time_value.time(), ' set time iz')
+            print(QtCore.QTime.currentTime(), ' current time iz')
+            self.appt_error = QMessageBox(self)
+            self.appt_error.setText("Cannot set time in the past")
+            self.appt_error.show()
+            self.errors += 1
+
+
+        #if self.time_value.date() < QtCore.QDate.currentDate():
+            #self.appt_error = QMessageBox(self)
+            #self.appt_error.setText("You cannot  book appointments in the past")
+            #self.appt_error.show()
+            #errors += 1
 
         if self.time_value.time() < min_time or  self.time_value.time() > max_time:
             self.appt_error = QMessageBox(self)
             self.appt_error.setText("You cannot  book appointments before 8am or after 4pm")
             self.appt_error.show()
-            errors += 1
+            self.errors += 1
 
-        elif errors == 0:
+        elif self.errors == 0:
             self.get_doc_appts = main.get_doctor_appts(self.doc_id, self.start_date_string[:10]) # call method with sql query
-            print("big burger",self.start_date_string, self.sEndTime, 'end')
 
             if len(self.get_doc_appts) == 0: # if length of query is 0 call method with sql query and enter detials
                 try:
-                    main.insertApptData(self.start_date_string, self.sEndTime, self.location.toPlainText(), "", self.doc_id, "")
+                    main.insertApptData(self.start_date_string, self.sEndTime, self.location_name_widget_data, "", self.doc_id, "")
                     success = QMessageBox(self)
                     success.setText("Appointment entered succesfully")
+                    success.show()
+                    self.close_window()
                 except:
                     fail = QMessageBox(self)
                     fail.setText("Appointment not entered")
@@ -623,8 +684,8 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         self.last_appt = self.appts.pop() # get the last end date from the list
         self.last_appt_start = self.start_dates.pop() # get the last start date from the list
 
-        print(self.last_appt) # print last appt end time for testing purposes
-        print(self.last_appt_start) # prnt last start time for testing purposes
+        print(self.last_appt,'last appointment end time') # print last appt end time for testing purposes
+        print(self.last_appt_start, 'last appointment start time') # prnt last start time for testing purposes
 
          # show error message as pop up
 
@@ -640,15 +701,18 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         elif len(self.get_doc_appts) <= 16:  # if length of query is less than 16 go to next if statement , if not go to the else statement
             print("check passed")
 
-            if self.check_time_gap( self.last_appt_start) >= 35 : # call check time ga method with argumebt of last appointment start time, if a value greater to or equal to 35 is returned go to the next if , if not go to the else statement
+            if self.check_time_gap( self.last_appt_start) >= 35  : # call check time ga method with argumebt of last appointment start time, if a value greater to or equal to 35 is returned go to the next if , if not go to the else statement Greater than 35 or less than or self.check_time_gap( self.last_appt_start) <= -35
 
                     if self.py_start_date > self.four_hour_check()[0]  and self.py_start_date  < self.four_hour_check()[1]: #  call four hour check method and check if the first element of the returned tuple  is greater than the start date time that is entered by the user and check that it is less than the second element of the returned tuple
                             self.error_msg = QtWidgets.QMessageBox(self, text="Appointment can not be booked in Doctors lunch hour") #  call message box method and set text  to say that appointments can not be set between doctors lunch hour
                             self.error_msg.show() # show error message as pop up
 
                     else: # if user has chosen a datetime that is not between the doctors lunch break then enter call the method with sql  query from the main file
-                            main.insertApptData(self.start_date_string, self.sEndTime, self.location.toPlainText(), "", self.doc_id,
+                            main.insertApptData(self.start_date_string, self.sEndTime, self.location.text(), "", self.doc_id,
                                                 "")
+                            self.errors = 0
+                            self.appt_conf = QMessageBox(self,text = "Appointment entered succesfully")
+                            self.close_window()
 
             else: # if user has selected time that is less than 35 mins after the start time of the latest start time in the database show user a message to say there must be at least 5 minutes between appointments ( appointments are 30 mins plus 5 at least 5 mins before the next appt)
                         self.error_msg = QtWidgets.QMessageBox(self, text="There must be at least 5 minutes between appointments") # call message box widget and set text
@@ -696,11 +760,14 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
 
         print(self.start_date_string)
 
-        self.check_doc_appts = main.get_selected_appts_id(self.start_date_string,self.location.toPlainText())
+        self.check_doc_appts = main.get_selected_appts_id(self.start_date_string,self.location.text())
         print(self.check_doc_appts, ' check doca apppts fig')
-        print(self.start_date_string,self.location.toPlainText(),' deets to pass')
+        print(self.start_date_string,self.location.text(),' deets to pass')
 
         return len(self.check_doc_appts)
+
+    def close_window(self):
+        self.close()
 
 
 
@@ -737,17 +804,17 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
         self.admin_bk.show()
 
     def d_add_doc(self):  # method to create instance of screen for patient to book appts class
-        self.add_doc = QtWidgets.QWidget()
-        self.add_doc.resize(250, 200)
-        self.add_doc.setWindowTitle("Add doctor")
-        self.add_doc_form = QFormLayout(self.add_doc)
-        self.add_doc_form.setGeometry(QtCore.QRect(10, 10, 75, 100))
-        self.doc_name = QtWidgets.QLineEdit()
+        self.add_doc = QtWidgets.QWidget() # create instance of QWidget
+        self.add_doc.resize(250, 200) # resize QWidget
+        self.add_doc.setWindowTitle("Add doctor") # set title for QWidet
+        self.add_doc_form = QFormLayout(self.add_doc) # create QFormLayout and add it to QWidget
+        self.add_doc_form.setGeometry(QtCore.QRect(10, 10, 75, 100)) # set size and location of QFormLayout
+        self.doc_name = QtWidgets.QLineEdit() # add widgets to form
         self.doc_lname = QtWidgets.QLineEdit()
-        self.doc_dob_cal = QtWidgets.QDateEdit(calendarPopup = True)
+        self.doc_dob_cal = QtWidgets.QDateEdit(calendarPopup = True) # ad dob field and allow calendar pop up for ease of dob entry by user
         self.doc_specialization = QtWidgets.QLineEdit()
 
-        self.add_doc_form.insertRow(1, QtWidgets.QLabel("First Name", self.add_doc), self.doc_name)
+        self.add_doc_form.insertRow(1, QtWidgets.QLabel("First Name", self.add_doc), self.doc_name) # add widgets to QFormLayout and add labels
         self.add_doc_form.addRow(QtWidgets.QLabel("Last Name", self.add_doc), self.doc_lname)
         self.add_doc_form.addRow(QtWidgets.QLabel("Date of birth", self.add_doc), self.doc_dob_cal)
         self.add_doc_form.addRow(QtWidgets.QLabel("Specialization", self.add_doc), self.doc_specialization)
@@ -775,17 +842,14 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
 
 
     def submit_doc(self):
-        self.doc_name_widg = self.add_doc_form.itemAt(0, 1)
-        self.doc_name_widget = self.doc_name_widg.widget()
-        self.doc_name_widget_data = self.doc_name_widget.text()
+        self.doc_name_widg = self.add_doc_form.itemAt(0, 1) # locate widget on QFormLayout at position
+        self.doc_name_widget = self.doc_name_widg.widget() # return the widget type
+        self.doc_name_widget_data = self.doc_name_widget.text() # get the text from the widget
         print(self.doc_name_widget_data, "First name")
 
         self.doc_surname_widg = self.add_doc_form.itemAt(1, 1)
         self.doc_surname_widget = self.doc_surname_widg.widget()
         self.doc_surname_widget_data = self.doc_surname_widget.text()
-
-
-
 
         self.doc_dob = self.add_doc_form.itemAt(2, 1)
         self.doc_dob_widget = self.doc_dob.widget()
@@ -882,6 +946,8 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
 
 
 
+
+
         self.delete_appt = QtWidgets.QPushButton(self.view_appts_table)
         self.delete_appt.setGeometry(QtCore.QRect(250, 700, 225, 75))
         self.delete_appt.setText("Delete appointment")
@@ -911,17 +977,6 @@ class AdminLoggedIn(QMainWindow): #  class that shows window when user has logge
 
         main.admin_delete_appt(self.get_appt_id1) # call sql query to delete record in db
         self.appts_data_model.removeRow(self.table.currentIndex().row(),QModelIndex()) # currentIndex is a method from QAbstractItemView of type QModelIndex that returns the index of current item. The .row method then returns the row relating to the item
-
-
-
-
-
-
-
-
-
-
-
 
 
     def admin_appts(self):  # this method is called when the menu button "admin area" is pressed
@@ -970,8 +1025,16 @@ class LoggedIn(QMainWindow): #  class that shows window when user has logged in
 
 
     def p_book_appts(self): #  method to create instance of screen for patient to book appts class
-        self.p = patient_book_appts() # make instance of class
-        self.p.show()  # show class
+        self.get_appointments = main.queryAppts()
+        if len(self.get_appointments) == 0:
+            self.no_appts = QMessageBox()
+            self.no_appts.setText("There are currently no appointments available")
+            self.no_appts.show()
+            self.close()
+        else:
+
+            self.p = patient_book_appts() # make instance of class
+            self.p.show()  # show class
 
     def view_appts(self): #  method to create instance of screen for patient to view booked  appsts class
         self.v = patientViewAppts() # make instance of class
@@ -999,11 +1062,11 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
 
 
-        self.setWindowTitle("Patient registration")
-        self.patient_form = QFormLayout(self)
-        self.patient_form.setFormAlignment(QtCore.Qt.AlignCenter)
-        self.patient_form.setGeometry(QtCore.QRect(150, 150, 300, 300))
-        self.first_name= QtWidgets.QLineEdit()
+        self.setWindowTitle("Patient registration") # set title of window
+        self.patient_form = QFormLayout(self) # create instance of a QFormLayout
+        self.patient_form.setFormAlignment(QtCore.Qt.AlignCenter) # set alignment of QFormLayout on the QWidget to center
+        self.patient_form.setGeometry(QtCore.QRect(150, 150, 300, 300)) # set size and location of QFormLayout
+        self.first_name= QtWidgets.QLineEdit() # add  widgets to form
         self.surname = QtWidgets.QLineEdit()
         self.gender= QtWidgets.QComboBox()
         self.gender.addItem("Male")
@@ -1011,11 +1074,12 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
         self.email = QtWidgets.QLineEdit()
         self.p_uname = QtWidgets.QLineEdit()
         self.p_password1 = QtWidgets.QLineEdit()
+        self.p_password1.setEchoMode(2) # echomode 2 masks the password
 
 
 
 
-        self.dob= QtWidgets.QDateEdit(calendarPopup = True)
+        self.dob= QtWidgets.QDateEdit(calendarPopup = True) # set the dob field to have a pop up calendar allowing the user to easily input their dob
 
         self.enter_add = QtWidgets.QPushButton()
         self.enter_add.setText("Enter address")
@@ -1026,7 +1090,7 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
         self.sbmt_details.setDisabled(True)
 
 
-        self.patient_form.insertRow(1, QtWidgets.QLabel("First name", self), self.first_name)
+        self.patient_form.insertRow(1, QtWidgets.QLabel("First name", self), self.first_name) # add widgets to form and add labels for them
         self.patient_form.addRow(QtWidgets.QLabel("Surname", self), self.surname)
         self.patient_form.addRow(QtWidgets.QLabel("Gender", self), self.gender)
         self.patient_form.addRow(QtWidgets.QLabel("Date of birth", self), self.dob)
@@ -1072,16 +1136,7 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
         self.timeo = self.time.setText(QDateTime.currentDateTime().toString())
 
 
-    def eventFilter(self, QObject, QEvent): # implement the eventFilter method which will handle the mouse click on the address tex edit
-        if QObject == self.p_address.viewport():
 
-            if QEvent.type() == QEvent.MouseButtonPress:
-                Layout.enter_address(self)
-
-            return True
-        else:
-
-            return self.eventFilter(QObject, QEvent)
 
 
     def get_p_age(self): # calculate patient age
@@ -1314,11 +1369,9 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
 
 
-
-
-        self.p_name = self.patient_form.itemAt(0, 1)
-        self.p_name_widget = self.p_name.widget()
-        self.p_name_text = self.p_name_widget.text()
+        self.p_name = self.patient_form.itemAt(0, 1) # locate widget item in form
+        self.p_name_widget = self.p_name.widget() # get the widget type
+        self.p_name_text = self.p_name_widget.text() # return the text from widget
         print(self.p_name_text)
 
         self.p_surname = self.patient_form.itemAt(1, 1)
@@ -1358,25 +1411,25 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
             self.add_line += line
 
 
-        self.preg_error_string = []
-        self.preg_list = []
-        self.patient_details = QMessageBox()
+        self.preg_error_string = [] # set up error string list
+        self.preg_list = [] # set up list to hold registration data
+        self.patient_details = QMessageBox() # set up message box to show user input error guidance
 
 
-        self.fname_match = re.search("^[A-Za-z]{1,20}$", self.p_name_text)
+        self.fname_match = re.search("^[A-Za-z]{1,20}$", self.p_name_text) # search text field for regex pattern
 
 
 
-        if self.fname_match is not None:
+        if self.fname_match is not None: # if a match is found in the reg ex pattern
             print("Valid first name")
             print(self.fname_match)
-            self.preg_list.append(self.p_name_text)
+            self.preg_list.append(self.p_name_text) # append text from field to string
 
 
         else:
             print("First name not valid")
             print(self.fname_match)
-            self.preg_error_string.append("Invalid first name")
+            self.preg_error_string.append("Invalid first name") # if pattern is not found append this message to the error string
 
         self.surname_match = re.search("^[A-Za-z]{1,20}$", self.p_surname_text)
 
@@ -1433,11 +1486,11 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
         print(len(self.preg_error_string),' preg error string')
 
-        self.p_user_check= main.check_user_name(self.p_user_text)
+        self.p_user_check= main.check_user_name(self.p_user_text) # call method that checks database for matching usernames
 
-        if len(self.preg_error_string) == 0 :
+        if len(self.preg_error_string) == 0 : # if the patient details string has 0 errors
 
-            if len(self.p_user_check) == 0:
+            if len(self.p_user_check) == 0: # if user name is unique
 
 
 
@@ -1445,7 +1498,7 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
                 main.insert_puser_data(self.p_name_text,self.p_calc_age, self.p_gender_text1,self.p_user_text,self.p_password_text,self.p_email_text, self.add_line,self.p_surname_text)  # call function with sql query from main and insert the doctor object attributes
                 self.details_success = QMessageBox()
-                self.details_success.setText("Details entered successfully")
+                self.details_success.setText("Details entered successfully") # tell user that details have been succesfully entered
                 self.details_success.show()
                 self.close()
 

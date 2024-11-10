@@ -127,7 +127,7 @@ def join(): # testing my sql skills with a join query
 def queryAppts(): # querying all of the data in the appointments table
     try:
 
-        cur.execute("SELECT  a.START_TIME, a.END_TIME,a.LOCATION,d.Name , d.ID FROM Appointments a INNER JOIN Doctor d on A.DOCTOR_ID = d.ID ")
+        cur.execute("SELECT  a.START_TIME, a.END_TIME,a.LOCATION,d.Name , d.ID FROM Appointments a INNER JOIN Doctor d on A.DOCTOR_ID = d.ID WHERE a.PATIENT_ID = ''   ")
         rows = cur.fetchall()
         return rows
 
@@ -385,7 +385,7 @@ def drop_col():
 
 def delete_dat():
 
-    cur.execute(" DELEtE FROM Patient")
+    cur.execute(" DELEtE FROM Appointments")
     print("duck")
     con.commit()
     con.close()
