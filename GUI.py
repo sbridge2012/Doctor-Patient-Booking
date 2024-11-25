@@ -309,7 +309,7 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
             self.submit = QtWidgets.QPushButton(self)
             self.submit.setText("Email me my appointment")
             self.submit.setGeometry(QtCore.QRect(220,325,200,65))
-            self.get_email = main.get_patient_email(loginScreen.logged_in_patientid)
+            self.get_email = main.get_patient_email(loginScreen.logged_in_patientid) # get patients email adddress from database
             self.submit.clicked.connect(self.send_email)
 
             #dock_widg = QDockWidget(self)
@@ -322,14 +322,14 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
 
     def send_email(self):
         self.appt_string =""
-        for start, end , location ,doctor in self.view_appts:
-            self.appt_string += start +" " + end + " "+ location + " " + doctor
+        for start, end , location ,doctor in self.view_appts: # get patients appts from database
+            self.appt_string += start +" " + end + " "+ location + " " + doctor # append appointment details to string
 
         print(self.appt_string)
-        for email in self.get_email:
+        for email in self.get_email: #  loop through the sql query resykts
             self.patient_email = email
             print("get emaail" , self.patient_email[0])
-            self.send_appts(self.patient_email[0] , self.appt_string)
+            self.send_appts(self.patient_email[0] , self.appt_string) # call the send appointments email method
 
 
         #self.p_appts.addItems(self.appts_list)  # add list dat to qlist widget - this is outside of the loop as we only want to add one string to list
@@ -337,14 +337,15 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
 
     def send_appts(self, email_address, appointments):
 
-        email = 'your email here'
-        password = 'your password here'
+        email = 'your email here' # email to log into
+        password = 'your password here' # password to log into email account
         smpt_object = smtplib.SMTP('smtp.gmail.com', 587)
-        smpt_object.ehlo()
-        smpt_object.starttls()
-        smpt_object.login(email, password)
+        smpt_object.ehlo() # identify self to smpt serer
+        smpt_object.starttls() # puts the SMTP connection in to security mode. All SMPT commands will be encrypred
+        smpt_object.login(email, password) # login to email account
         from_address = email
         p_email = email_address
+        print(p_email)
 
         subject = "Your appointments"
         msg = " Dear Patient, please find your appointment listed below"  +'\n' + appointments
@@ -352,7 +353,7 @@ class patientViewAppts(QMainWindow): # qmain window displaying a patients booked
 
         try:
 
-            smpt_object.sendmail(from_address, p_email, email_message)
+            smpt_object.sendmail(from_address, p_email, email_message) # send email message
             time = True
 
         except:
@@ -399,6 +400,12 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
         self.submit_btn.setText("Submit")
         self.table.setSelectionBehavior(1)
         self.table.setSelectionMode(1)
+        self.date_picker.dateChanged.connect(self.appt_date_filter)
+
+        col = 0
+        for col in range(len(self.get_appts[0])):
+            self.table.setColumnWidth(col, 175)
+        col += 1
 
 
         self.appt_list = []
@@ -410,43 +417,53 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
             self.appt_list.append((start,end,location,doc))
             print(self.appt_list, 'appt list')
 
-            self.tab_row = 0
+        self.tab_row = 0
 
-            self.data_model = TableModel(self.appt_list)
-            self.table.setModel(self.data_model)
-            col = 0
-            for col in range(len(self.get_appts[0])):
-                self.table.setColumnWidth(col,175)
-                col += 1
+        self.data_model = TableModel(self.appt_list)
+        self.table.setModel(self.data_model)
 
-            self.table.setRowHeight(0,40)
 
-            self.table.show()
-            self.date_picker.dateChanged.connect(self.appt_date_filter)
-            #self.table.cellClicked.connect(self.change)
-            self.submit_btn.clicked.connect(self.submit_data)
-            self.close_window.clicked.connect(self.close_win)
+        self.table.setRowHeight(0,40)
+
+        self.table.show()
+
+        self.submit_btn.clicked.connect(self.submit_data)
+        self.close_window.clicked.connect(self.close_win)
+
+
 
 
 
     def appt_date_filter(self):
+
+
+        filt_error = QMessageBox(self)
         self.date_filter = self.date_picker.date()
         self.filter_date_py = self.date_filter.toPyDate()
         self.filter_date_string = self.filter_date_py.strftime("%Y-%m-%d")
         #print(self.filter_date_string, "filter date")
 
         self.get_filt_apps = main.filter_appts(self.filter_date_string)
+        self.filt_appt_list =[]
+        self.filt_appt_list_string = ''
 
-        if len(self.get_filt_apps) == 0:
-             filt_error =QMessageBox(self)
+        for start, end, location, doc, id in self.get_filt_apps:
+            self.filt_appt_list_string += start + '' + end + '' + location + '' + doc
+
+            self.filt_appt_list.append((start, end, location, doc))
+
+        if len(self.filt_appt_list) == 0:
+
+
+
              filt_error.setText("No appointments on this day")
              filt_error.show()
-             self.date_picker.setDate(QDate.currentDate())
+
 
         else:
 
 
-            self.data_model = TableModel(self.get_filt_apps)
+            self.data_model = TableModel(self.filt_appt_list)
             self.table.setModel(self.data_model)
             self.table.setColumnWidth(0, 150)
             self.table.setRowHeight(0, 40)
@@ -471,7 +488,8 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
 
     def submit_data(self):  # method to submit data to database
         self.index = self.table.selectionModel().currentIndex()
-
+        self.appt_conf = QMessageBox(self)
+        self.appt_conf.setText("Appointment booked")
         self.s_date = self.index.siblingAtColumn(0).data()
         self.location = self.index.siblingAtColumn(2).data()
 
@@ -493,6 +511,8 @@ class patient_book_appts(QtWidgets.QWidget): # qmain window displaying available
         # print("patient apps numb", len(main.get_patient_appts(loginScreen.logged_in_patientid))) # get length of query result for testing purposes
         if len(main.get_patient_appts(loginScreen.logged_in_patientid)) == 0:  # if length is 0 insert call update appointments method query from main file
            main.update_appts(loginScreen.logged_in_patientid,self.get_appt_id1)
+           self.appt_conf.show()
+           self.close()
         else:
           self.error_msg = QtWidgets.QMessageBox(self, text="You can only have one appointment booked") # if length of appointment query is not 0 show message saying you can only have one appointment booked at a time
           self.error_msg.show()
@@ -542,16 +562,13 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         self.location = QtWidgets.QLineEdit(self)
         self.choose_doctor = QtWidgets.QComboBox(self)
         self.choose_doctor.currentIndexChanged.connect(self.get_index)
-        self.appt_length = QtWidgets.QComboBox(self)
-        self.apptLengthOptions = ["15",
-                                  "30"]  # add options for appointment lengths to a list - these will later be converted to int
-        self.appt_length.addItems(self.apptLengthOptions)  # add list to combo box
+
 
 
         self.add_appt_form.insertRow(1, QtWidgets.QLabel("Location", self), self.location)
         self.add_appt_form.addRow(QtWidgets.QLabel("Start time", self), self.start_time)
         self.add_appt_form.addRow(QtWidgets.QLabel("Choose doctor", self), self.choose_doctor)
-        self.add_appt_form.addRow(QtWidgets.QLabel("Appointment length", self), self.appt_length)
+
         self.add_appt_sbmt = QtWidgets.QPushButton("Submit", self)
         self.add_appt_sbmt.setGeometry(QtCore.QRect(110, 155, 75, 45))
         self.add_appt_sbmt.show()
@@ -562,8 +579,8 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         print(self.get_doc) # print the variable for testing purposes
         self.doc_list = [] # initialize list
         self.doc_string = "" # initialize doc string
-        for i , n in self.get_doc: # loop through results of sql query
-            doc_string = str(i) + " " + n # add loop variables to string
+        for i , n , sn in self.get_doc: # loop through results of sql query
+            doc_string = str(i) + " " + n  +" " + sn# add loop variables to string
             self.doc_list.append(doc_string) # add doc_string to list
         self.choose_doctor.addItems(self.doc_list) # add doc_string to list
 
@@ -600,24 +617,14 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
         current_year = QtCore.QDate.year(QtCore.QDate.currentDate())
         min_time = QtCore.QTime(8, 29)
         max_time = QtCore.QTime(16,30)
+        lunch_start = QtCore.QTime(13,00)
+        lunch_end = QtCore.QTime(14, 00)
         self.errors = 0
 
         self.location_widg= self.add_appt_form.itemAt(0, 1)
         self.location_name_widget = self.location_widg.widget()
         self.location_name_widget_data = self.location_name_widget.text()
-        print(self.location_name_widget_data , 'location fro wiidget')
-
-        # self.start_time_widg = self.add_appt_form.itemAt(1, 1) # redundant code
-        # self.start_time_widget = self.start_time_widg.widget() # redundant code
-        #self.start_time_widget_data = self.start_time_widget.dateTime() # redundant code
-        #print(self.start_time_widget_data , 'start time from widget') # redundant code
-
-        self.appt_length_widg = self.add_appt_form.itemAt(3, 1)
-        self.appt_length_widget = self.appt_length_widg.widget()
-        self.appt_length_data = self.appt_length_widget.currentText()
-        print(self.appt_length_data, ' appt length from widget')
-
-
+        print(self.location_name_widget_data , 'location from wiidget')
 
 
         if not self.location_name_widget_data:
@@ -626,7 +633,7 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
             self.appt_error.show()
             self.errors += 1
 
-
+        print(self.time_value.currentDateTime(), 'current date time test')
 
         if self.time_value.currentDateTime() < QtCore.QDateTime.currentDateTime():
             print(self.time_value.time(), ' set time iz')
@@ -635,19 +642,24 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
             self.appt_error.setText("Cannot set time in the past")
             self.appt_error.show()
             self.errors += 1
+            print(self.errors,'errors')
 
-
-        #if self.time_value.date() < QtCore.QDate.currentDate():
-            #self.appt_error = QMessageBox(self)
-            #self.appt_error.setText("You cannot  book appointments in the past")
-            #self.appt_error.show()
-            #errors += 1
-
-        if self.time_value.time() < min_time or  self.time_value.time() > max_time:
+        if self.time_value.time() > lunch_start and  self.time_value.time() < lunch_end:
             self.appt_error = QMessageBox(self)
-            self.appt_error.setText("You cannot  book appointments before 8am or after 4pm")
+            self.appt_error.setText("You cannot book appointments in lunch hour")
             self.appt_error.show()
             self.errors += 1
+            print(self.errors, 'errors')
+
+
+
+
+        if self.time_value.time() < min_time or  self.time_value.time() > max_time :
+            self.appt_error = QMessageBox(self)
+            self.appt_error.setText("You cannot  book appointments before 8am or after 4pm or between 1-2pm")
+            self.appt_error.show()
+            self.errors += 1
+            print(self.errors, 'errors')
 
         elif self.errors == 0:
             self.get_doc_appts = main.get_doctor_appts(self.doc_id, self.start_date_string[:10]) # call method with sql query
@@ -658,7 +670,7 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
                     success = QMessageBox(self)
                     success.setText("Appointment entered succesfully")
                     success.show()
-                    self.close_window()
+                    self.close()
                 except:
                     fail = QMessageBox(self)
                     fail.setText("Appointment not entered")
@@ -668,6 +680,7 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
                 self.get_end_dates()
 
     def get_end_dates(self):
+        self.clash = 0
         self.appts = [] # initialize list
         self.start_dates = [] # initialize list
         print(self.doc_id, "doc id", self.start_date_string) # print doc id and start date string for testing purposes
@@ -681,94 +694,36 @@ class admin_bk_appts(QtWidgets.QWidget): # inherit class QMainWindow
             self.start_date_string_to_date_obj = datetime.strptime(s_date, "%Y-%m-%d, %H:%M:%S") # get the start dte from the loop and convert it to python datetime object
             self.start_dates.append(self.start_date_string_to_date_obj) # python datetime object to list
 
-        self.last_appt = self.appts.pop() # get the last end date from the list
-        self.last_appt_start = self.start_dates.pop() # get the last start date from the list
-
-        print(self.last_appt,'last appointment end time') # print last appt end time for testing purposes
-        print(self.last_appt_start, 'last appointment start time') # prnt last start time for testing purposes
-
-         # show error message as pop up
+            if self.py_start_date >= self.start_date_string_to_date_obj and  self.py_start_date <= self.end_date_string_to_date_obj +timedelta(minutes=5):
+                self.clash += 1
 
 
-        if self.check_duplicate_apps() >0:
-            error_msg1 = QtWidgets.QMessageBox(self,
-                                                    text="Duplicate appointments are not allowed")  # call message box method and set text  to say that appointments can not be set between doctors lunch hour
-            error_msg1.show()
+            #if self.py_start_date >=  self.four_hour_check()[0] and  self.py_start_date <= self.four_hour_check()[1]:
+                #self.clash +=1
 
+
+        if self.clash > 0:
+            self.error1 = QMessageBox(self)
+            self.error1.setText("Selected time clashes with another appointment or lunch hour")
+            self.error1.show()
 
 
 
-        elif len(self.get_doc_appts) <= 16:  # if length of query is less than 16 go to next if statement , if not go to the else statement
-            print("check passed")
+        else: # if user has chosen a datetime that is not between the doctors lunch break then enter call the method with sql  query from the main file
+            main.insertApptData(self.start_date_string, self.sEndTime, self.location.text(), "", self.doc_id,"")
+            self.errors = 0
+            self.appt_conf = QMessageBox(self,text = "Appointment entered succesfully")
+            self.appt_conf.show()
+            self.close()
 
-            if self.check_time_gap( self.last_appt_start) >= 35  : # call check time ga method with argumebt of last appointment start time, if a value greater to or equal to 35 is returned go to the next if , if not go to the else statement Greater than 35 or less than or self.check_time_gap( self.last_appt_start) <= -35
+    # self.last_appt = self.appts.pop() # get the last end date from the list
+    # self.last_appt_start = self.start_dates.pop() # get the last start date from the list
+    # print(self.last_appt,'last appointment end time') # print last appt end time for testing purposes
+    # print(self.last_appt_start, 'last appointment start time') # prnt last start time for testing purposes
+    # def check_time_gap(self , appt): # method that checks gap (difference) between two times
 
-                    if self.py_start_date > self.four_hour_check()[0]  and self.py_start_date  < self.four_hour_check()[1]: #  call four hour check method and check if the first element of the returned tuple  is greater than the start date time that is entered by the user and check that it is less than the second element of the returned tuple
-                            self.error_msg = QtWidgets.QMessageBox(self, text="Appointment can not be booked in Doctors lunch hour") #  call message box method and set text  to say that appointments can not be set between doctors lunch hour
-                            self.error_msg.show() # show error message as pop up
-
-                    else: # if user has chosen a datetime that is not between the doctors lunch break then enter call the method with sql  query from the main file
-                            main.insertApptData(self.start_date_string, self.sEndTime, self.location.text(), "", self.doc_id,
-                                                "")
-                            self.errors = 0
-                            self.appt_conf = QMessageBox(self,text = "Appointment entered succesfully")
-                            self.close_window()
-
-            else: # if user has selected time that is less than 35 mins after the start time of the latest start time in the database show user a message to say there must be at least 5 minutes between appointments ( appointments are 30 mins plus 5 at least 5 mins before the next appt)
-                        self.error_msg = QtWidgets.QMessageBox(self, text="There must be at least 5 minutes between appointments") # call message box widget and set text
-                        self.error_msg.show()  #  show error message widget
-
-        else: # if length of query is greater than 16
-            self.error_msg = QtWidgets.QMessageBox(self, text="Doctors can only have 16 appointments per day") #  call message box widget and set text
-            self.erro_msg.show()  #  show error message widget
-
-
-
-    def check_time_gap(self , appt): # method that checks gap (difference) between two times
-
-        self.time_difference = self.py_start_date - appt # calculate difference between user selected datetime and appt( this is is the last appointment start time)
-        self.gapLength = (self.time_difference.total_seconds() / 60) # call total seconds method on the caclulated result from above and divide by 60 get number of minutes
-        print(self.gapLength, "gap length is")  # print result from above for testing purposes
-        return self.gapLength # return gaplength
-
-    def four_hour_check(self): #  this method calculates when the doctors lunch hour should be (4 hours after first appointment of day)
-
-        self.s_appts = [] #  initialize list
-        self.get_doc_appts_start_time = main.get_doctor_appts_s_time(self.doc_id, self.start_date_string[:10]) #  call function with sql query from main file
-
-        for id, start in self.get_doc_appts_start_time: #  set up for loop to go through returned list of tuples from sql query
-
-            self.start_date_string_to_date_obj = datetime.strptime(start, "%Y-%m-%d, %H:%M:%S") #  turn each date string into a python date time object
-            self.s_appts.append( self.start_date_string_to_date_obj) #  append python date time object to s_appts list
-            print(self.appts, "apps date") #  print s appts list for testing purposes
-
-        self.first_appt = self.s_appts[0] #  get the first element of the list
-        print(self.first_appt) #  print first element for testing purposes
-
-        self.time_check = self.py_start_date - self.first_appt #  take away the user selected datetime from the s_appts first element and set it to variable
-        self.s_gap_length = (self.time_check.total_seconds() / 60) #  call time deltas total seconds method on the above time_check variable and then divide by 60 to get the total seconds
-        print(self.s_gap_length, "gap length is") #  print the above variable for testing purposes
-
-        self.lunch_start = self.first_appt + timedelta(seconds=14400) #  calculate 4 hours from first appointment time and set it to variable
-        self.lunch_end = self.lunch_start + timedelta(seconds=3600) #  calculate one hour from above variable and set it to variable
-        print(self.lunch_end, " this is lunch end time <<<") #  print lunch end variable for testing purposes
-        print(self.lunch_start, "lunch start") #  print lunch start variable for testing purposes
-
-        return self.lunch_start , self.lunch_end # return lunch start and lunch end variables as a tuple
-
-    def check_duplicate_apps(self):
-
-        print(self.start_date_string)
-
-        self.check_doc_appts = main.get_selected_appts_id(self.start_date_string,self.location.text())
-        print(self.check_doc_appts, ' check doca apppts fig')
-        print(self.start_date_string,self.location.text(),' deets to pass')
-
-        return len(self.check_doc_appts)
-
-    def close_window(self):
-        self.close()
-
+        # self.time_difference = self.py_start_date - appt # calculate difference between user selected datetime and appt( this is is the last appointment start time)
+         # self.gapLength = (self.time_difference.total_seconds() / 60) # call total seconds method on the caclulated result from above and divide by 60 get number of minutes
 
 
     # sql query to search appointment table for appts with that date , time and location , if query returns 0 then ok , if returns > 0 then deny
@@ -1149,15 +1104,10 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
 
 
+
     def test(self): # used for testing
         print("trigger test")
 
-        # def retranslateUi(self):
-        #   translate = QtCore.QCoreApplication.translate
-        # self.setWindowTitle(_translate("", "Patient/Doctor booking app"))
-        # self.pushButton.setText(_translate("", "Click"))
-
-    # this section of code disables the patient fields if the doctor radio button is clicked
 
     def validate_data(self, password):
 
@@ -1408,7 +1358,7 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
         self.add_line = " "
         for line in self.add_list:
-            self.add_line += line
+            self.add_line += line + " "
 
 
         self.preg_error_string = [] # set up error string list
@@ -1470,7 +1420,7 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
             print(self.uname_match)
             self.preg_error_string.append("Username must be up to 12 characters")
 
-        self.pword_match = re.search("^[A-Z]{1}\w{1,5}[!]$", self.p_password_text)
+        self.pword_match = re.search("^[A-Z]{1}\w{1,10}[!]$", self.p_password_text)
 
         if self.pword_match is not None:
             print("Valid password")
@@ -1480,8 +1430,9 @@ class Layout(QtWidgets.QWidget): #  class to show initial screen of app
 
         else:
             print("Password not valid")
+            print(self.p_password_text, 'password is')
             print(self.pword_match)
-            self.preg_error_string.append("Password must start with a capital and end with a !")
+            self.preg_error_string.append("Password must start with a capital and end with a ! and be less than 10 characters")
 
 
         print(len(self.preg_error_string),' preg error string')

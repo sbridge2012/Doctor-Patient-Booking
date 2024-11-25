@@ -144,10 +144,10 @@ def admin_view_appts(): # querying all of the data in the appointments table
 
     except sqlite3.Error as error:
         print("error has occured")
-def filter_appts(date): # querying all of the data in the appointments table
+def filter_appts(date): # querying all of the data in the appointments table with date filtered
     try:
 
-        cur.execute("SELECT  a.START_TIME, a.END_TIME,a.LOCATION,d.Name , d.ID FROM Appointments a INNER JOIN Doctor d on A.DOCTOR_ID = d.ID WHERE substr( START_TIME, 1, 10 ) =?",(date,))
+        cur.execute("SELECT  a.START_TIME, a.END_TIME,a.LOCATION,d.Name , d.ID FROM Appointments a INNER JOIN Doctor d on A.DOCTOR_ID = d.ID WHERE a.PATIENT_ID = '' AND substr( START_TIME, 1, 10 ) =?",(date,) )
 
         rows = cur.fetchall()
         return rows
@@ -185,7 +185,7 @@ def admin_delete_appt(appt_id): # querying all of the data in the appointments t
 def queryDoc(): # query the id and name from the doctor table
     try:
 
-        cur.execute(" SELECT ID , NAME FROM Doctor")
+        cur.execute(" SELECT ID , NAME, SURNAME FROM Doctor")
         rows = cur.fetchall()
         return rows
 
@@ -385,7 +385,7 @@ def drop_col():
 
 def delete_dat():
 
-    cur.execute(" DELEtE FROM Appointments")
+    cur.execute(" DELEtE FROM Doctor")
     print("duck")
     con.commit()
     con.close()
